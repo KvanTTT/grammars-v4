@@ -1,6 +1,5 @@
 using Antlr4.Runtime;
 using System.Collections.Generic;
-using static PT.PM.JavaScriptParseTreeUst.JavaScriptParser;
 
 /// <summary>
 /// All lexer methods that used in grammar (IsStrictMode)
@@ -28,10 +27,17 @@ public abstract class JavaScriptBaseLexer : Lexer
     /// </summary>
     private bool _useStrictCurrent = false;
 
+#if CSharpOptimized
     public JavaScriptBaseLexer(ICharStream input)
         : base(input)
     {
     }
+#else
+    public JavaScriptBaseLexer(ICharStream input, System.IO.TextWriter output, System.IO.TextWriter errorOutput)
+        : base(input, output, errorOutput)
+    {
+    }
+#endif
 
     public bool IsStartOfFile(){
         return _lastToken == null;
@@ -92,7 +98,7 @@ public abstract class JavaScriptBaseLexer : Lexer
 
     protected void ProcessStringLiteral()
     {
-        if (_lastToken == null || _lastToken.Type == OpenBrace)
+        if (_lastToken == null || _lastToken.Type == JavaScriptParser.OpenBrace)
         {
             if (Text.Equals("\"use strict\"") || Text.Equals("'use strict'"))
             {
@@ -118,18 +124,18 @@ public abstract class JavaScriptBaseLexer : Lexer
 
         switch (_lastToken.Type)
         {
-            case Identifier:
-            case NullLiteral:
-            case BooleanLiteral:
-            case This:
-            case CloseBracket:
-            case CloseParen:
-            case OctalIntegerLiteral:
-            case DecimalLiteral:
-            case HexIntegerLiteral:
-            case StringLiteral:
-            case PlusPlus:
-            case MinusMinus:
+            case JavaScriptParser.Identifier:
+            case JavaScriptParser.NullLiteral:
+            case JavaScriptParser.BooleanLiteral:
+            case JavaScriptParser.This:
+            case JavaScriptParser.CloseBracket:
+            case JavaScriptParser.CloseParen:
+            case JavaScriptParser.OctalIntegerLiteral:
+            case JavaScriptParser.DecimalLiteral:
+            case JavaScriptParser.HexIntegerLiteral:
+            case JavaScriptParser.StringLiteral:
+            case JavaScriptParser.PlusPlus:
+            case JavaScriptParser.MinusMinus:
                 // After any of the tokens above, no regex literal can follow.
                 return false;
             default:

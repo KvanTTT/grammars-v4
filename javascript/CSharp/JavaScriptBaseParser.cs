@@ -1,5 +1,4 @@
 using Antlr4.Runtime;
-using static PT.PM.JavaScriptParseTreeUst.JavaScriptParser;
 
 /// <summary>
 /// All parser methods that used in grammar (p, prev, notLineTerminator, etc.)
@@ -7,10 +6,17 @@ using static PT.PM.JavaScriptParseTreeUst.JavaScriptParser;
 /// </summary>
 public abstract class JavaScriptBaseParser : Parser
 {
+#if CSharpOptimized
     public JavaScriptBaseParser(ITokenStream input)
         : base(input)
     {
     }
+#else
+    public JavaScriptBaseParser(ITokenStream input, System.IO.TextWriter output, System.IO.TextWriter errorOutput)
+        : base(input, output, errorOutput)
+    {
+    }
+#endif
 
     /// <summary>
     /// Short form for prev(String str)
@@ -25,7 +31,7 @@ public abstract class JavaScriptBaseParser : Parser
     /// </summary>
     protected bool prev(string str)
     {
-        return _input.Lt(-1).Text.Equals(str);
+        return Lt(-1).Text.Equals(str);
     }
 
     // Short form for next(String str)
@@ -37,23 +43,23 @@ public abstract class JavaScriptBaseParser : Parser
     // Whether the next token value equals to @param str
     protected bool next(string str)
     {
-        return _input.Lt(1).Text.Equals(str);
+        return Lt(-1).Text.Equals(str);
     }
 
     protected bool notLineTerminator()
     {
-        return !here(LineTerminator);
+        return !here(JavaScriptParser.LineTerminator);
     }
 
     protected bool notOpenBraceAndNotFunction()
     {
-        int nextTokenType = _input.Lt(1).Type;
-        return nextTokenType != OpenBrace && nextTokenType != Function;
+        int nextTokenType = Lt(1).Type;
+        return nextTokenType != JavaScriptParser.OpenBrace && nextTokenType != JavaScriptParser.Function;
     }
 
     protected bool closeBrace()
     {
-        return _input.Lt(1).Type == CloseBrace;
+        return Lt(1).Type == JavaScriptParser.CloseBrace;
     }
 
     /// <summary>Returns true if on the current index of the parser's
@@ -67,7 +73,7 @@ public abstract class JavaScriptBaseParser : Parser
     {
         // Get the token ahead of the current index.
         int possibleIndexEosToken = CurrentToken.TokenIndex - 1;
-        IToken ahead = _input.Get(possibleIndexEosToken);
+        IToken ahead = Get(possibleIndexEosToken);
 
         // Check if the token resides on the Hidden channel and if it's of the
         // provided type.
@@ -84,7 +90,7 @@ public abstract class JavaScriptBaseParser : Parser
     {
         // Get the token ahead of the current index.
         int possibleIndexEosToken = CurrentToken.TokenIndex - 1;
-        IToken ahead = _input.Get(possibleIndexEosToken);
+        IToken ahead = Get(possibleIndexEosToken);
 
         if (ahead.Channel != Lexer.Hidden)
         {
@@ -92,17 +98,17 @@ public abstract class JavaScriptBaseParser : Parser
             return false;
         }
 
-        if (ahead.Type == LineTerminator)
+        if (ahead.Type == JavaScriptParser.LineTerminator)
         {
             // There is definitely a line terminator ahead.
             return true;
         }
 
-        if (ahead.Type == WhiteSpaces)
+        if (ahead.Type == JavaScriptParser.WhiteSpaces)
         {
             // Get the token ahead of the current whitespaces.
             possibleIndexEosToken = CurrentToken.TokenIndex - 2;
-            ahead = _input.Get(possibleIndexEosToken);
+            ahead = Get(possibleIndexEosToken);
         }
 
         // Get the token's text and type.
@@ -110,7 +116,25 @@ public abstract class JavaScriptBaseParser : Parser
         int type = ahead.Type;
 
         // Check if the token is, or contains a line terminator.
-        return (type == MultiLineComment && (text.Contains("\r") || text.Contains("\n"))) ||
-                (type == LineTerminator);
+        return (type == JavaScriptParser.MultiLineComment && (text.Contains("\r") || text.Contains("\n"))) ||
+                (type == JavaScriptParser.LineTerminator);
+    }
+
+    protected IToken Lt(int k)
+    {
+#if CSharpOptimized
+        return _input.Lt(k);
+#else
+        return TokenStream.LT(k);
+#endif
+    }
+
+    protected IToken Get(int i)
+    {
+#if CSharpOptimized
+        return _input.Get(i);
+#else
+        return TokenStream.Get(i);
+#endif
     }
 }
